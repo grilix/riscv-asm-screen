@@ -5,7 +5,7 @@
 .equ    SCREEN_DATA,    0x40
 
 .global new_screen_send_page # (address, *bytes) => result
-.global screen_fill_page # (address, page, pattern, length) => result
+.global screen_fill_page # (address, page, column, length, pattern) => result
 .global screen_sprite_page # (address, page, column, &sprite) => result
 
 screen_set_cursor: # (address, page, column) => result {
@@ -32,12 +32,16 @@ screen_set_cursor: # (address, page, column) => result {
   lw    a0, 4*1(sp) # page
   add   a1, a1, a0
   sw    a1, 4*4(sp)
-  li    a1, 0x00 # TODO: lower (column)
   lw    a0, 4*2(sp) # column
-  add   a1, a1, a0
-  sw    a1, 4*5(sp)
+  andi  a1, a0, 0x0f
+  sw    a1, 4*5(sp) # column & 0x0f
+
   li    a1, 0x10 # TODO: higher (column)
-  sw    a1, 4*6(sp)
+  lw    a0, 4*2(sp) # column
+  srli  a0, a0, 4
+  andi  a1, a0, 0x0f
+  ori   a1, a1, 0x10
+  sw    a1, 4*6(sp) # ((column >> 4) & 0x0f) | 0x10
 
   mv    a0, sp
   addi  a0, a0, 4*3 # stack offset
@@ -63,7 +67,6 @@ screen_sprite_page: # (address, page, column, &sprite) => result {
   sw    a2, 4*4(sp) # column
   sw    a3, 4*5(sp) # &sprite
 
-  # li    a2, 0x00 # column
   jal   screen_set_cursor # (address, page, column) => result
   bne   a0, zero, .L_screen_sprite_page_end
 
@@ -92,16 +95,15 @@ screen_sprite_page: # (address, page, column, &sprite) => result {
   j     i2c_stop
   # }
 
-screen_fill_page: # (address, page, pattern, length) => result {
-  addi  sp, sp, -4*5
+screen_fill_page: # (address, page, column, length, pattern) => result {
+  addi  sp, sp, -4*6
   sw    ra, 4*0(sp)
   sw    s0, 4*1(sp)
 
   sw    a3, 4*2(sp) # length
-  sw    a2, 4*3(sp) # pattern
+  sw    a4, 4*3(sp) # pattern
   sw    a0, 4*4(sp) # address
 
-  li    a2, 0x00 # column
   jal   screen_set_cursor # (address, page, column) => result
   bne   a0, zero, .L_screen_fill_page_end
 
@@ -128,7 +130,7 @@ screen_fill_page: # (address, page, pattern, length) => result {
 
   lw    s0, 4*1(sp)
   lw    ra, 4*0(sp)
-  addi  sp, sp, 4*5
+  addi  sp, sp, 4*6
 
   j     i2c_stop
   # }

@@ -28,16 +28,49 @@ screen_dev:
 
 .section .rodata
 
+D_sprite_star:
+  .word 8
+  .word 0b00000000
+  .word 0b00001000
+  .word 0b00011100
+  .word 0b00100010
+  .word 0b01100011
+  .word 0b00100010
+  .word 0b00011100
+  .word 0b00001000
+
+D_sprite_arrow_right:
+  .word 8
+  .word 0b00000000
+  .word 0b00001000
+  .word 0b00001000
+  .word 0b00001000
+  .word 0b01111111
+  .word 0b00111110
+  .word 0b00011100
+  .word 0b00001000
+
+D_sprite_arrow_down:
+  .word 8
+  .word 0b00000000
+  .word 0b00001000
+  .word 0b00001000
+  .word 0b00111000
+  .word 0b01111111
+  .word 0b00111000
+  .word 0b00011000
+  .word 0b00001000
+
 D_sprite_box:
   .word 8
-  .word 0b11111111
-  .word 0b10000001
-  .word 0b10000001
-  .word 0b10000001
-  .word 0b10000001
-  .word 0b10000001
-  .word 0b10000001
-  .word 0b11111111
+  .word 0b00000000
+  .word 0b01111111
+  .word 0b01000001
+  .word 0b01000001
+  .word 0b01000001
+  .word 0b01000001
+  .word 0b01000001
+  .word 0b01111111
 
 i2c_dev:
   .word 0x3c # address
@@ -327,29 +360,33 @@ start: # () => {
 
   mv    a0, s0 # addr
   li    a1, 0 # page
-  li    a2, 0x00 # pattern
+  li    a2, 0 # column
   li    a3, 128 # length
-  jal   screen_fill_page # (address, page, pattern, length)
+  li    a4, 0x00 # pattern
+  jal   screen_fill_page # (address, page, column, length, pattern) => result
   bne   a0, zero, L_loop_start
 
   mv    a0, s0 # addr
   li    a1, 1 # page
-  li    a2, 0x00 # pattern
+  li    a2, 0 # column
   li    a3, 128 # length
-  jal   screen_fill_page # (address, page, pattern, length)
+  li    a4, 0x00 # pattern
+  jal   screen_fill_page # (address, page, column, length, pattern) => result
   bne   a0, zero, L_loop_start
 
   mv    a0, s0 # addr
   li    a1, 2 # page
-  li    a2, 0x00 # pattern
+  li    a2, 0 # column
   li    a3, 128 # length
-  jal   screen_fill_page # (address, page, pattern, length)
+  li    a4, 0x00 # pattern
+  jal   screen_fill_page # (address, page, column, length, pattern) => result
   bne   a0, zero, L_loop_start
 
   mv    a0, s0 # addr
   li    a1, 3 # page
-  li    a2, 0x00 # pattern
+  li    a2, 0 # column
   li    a3, 128 # length
+  li    a4, 0x00 # pattern
   jal   screen_fill_page # (address, page, pattern, length)
   bne   a0, zero, L_loop_start
 
@@ -359,11 +396,10 @@ start: # () => {
 
   li    s1, 0x00
 
-  mv    a0, s0
-  li    a1, 3
-  li    a2, 3
-  la    a3, D_sprite_box
-
+  mv    a0, s0 # address
+  li    a1, 2 # page
+  li    a2, 0 # column
+  la    a3, D_sprite_arrow_right # &sprite
   jal   screen_sprite_page # (address, page, column, &sprite) => result
   # TODO: errors
 
@@ -376,21 +412,32 @@ L_loop_start:
   li    a1, LED_IRQ
   jal   toggle_pins
 
-  bne   s1, zero, L_loop_start_empty
-# L_loop_start_solid:
-  li    s1, 0x0f
-  j     L_loop_start_send_screen
+  beq   s1, zero, L_loop_show_arrow
+  mv    s1, zero
 
-L_loop_start_empty:
-  li    s1, 0x00
-
-L_loop_start_send_screen:
-  mv    a0, s0 # addr
-  li    a1, 1 # page
-  mv    a2, s1 # pattern
-  li    a3, 128 # length
-  jal   screen_fill_page # (address, page, pattern, length)
+L_loop_hide_arrow:
+  mv    a0, s0 # address
+  li    a1, 2 # page
+  li    a2, 0 # column
+  la    a3, D_sprite_arrow_right
+  lw    a3, 0(a3) # length
+  mv    a4, zero
+  jal   screen_fill_page # (address, page, column, length, pattern) => result
   bne   a0, zero, L_loop_start
+
+  j     L_loop_arrow_end
+
+L_loop_show_arrow:
+  mv    a0, s0 # address
+  li    a1, 2 # page
+  li    a2, 0 # column
+  la    a3, D_sprite_arrow_right
+  jal   screen_sprite_page # (address, page, column, &sprite) => result
+  # TODO: errors
+
+  li    s1, 0x01
+
+L_loop_arrow_end:
 
   li    a0, 1
   jal   clk_wait_ticks
