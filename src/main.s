@@ -26,52 +26,6 @@ screen_dev:
   .word 0x3c # address
   .word 128  # segment length
 
-.section .rodata
-
-D_sprite_star:
-  .word 8
-  .word 0b00000000
-  .word 0b00001000
-  .word 0b00011100
-  .word 0b00100010
-  .word 0b01100011
-  .word 0b00100010
-  .word 0b00011100
-  .word 0b00001000
-
-D_sprite_arrow_right:
-  .word 8
-  .word 0b00000000
-  .word 0b00001000
-  .word 0b00001000
-  .word 0b00001000
-  .word 0b01111111
-  .word 0b00111110
-  .word 0b00011100
-  .word 0b00001000
-
-D_sprite_arrow_down:
-  .word 8
-  .word 0b00000000
-  .word 0b00001000
-  .word 0b00001000
-  .word 0b00111000
-  .word 0b01111111
-  .word 0b00111000
-  .word 0b00011000
-  .word 0b00001000
-
-D_sprite_box:
-  .word 8
-  .word 0b00000000
-  .word 0b01111111
-  .word 0b01000001
-  .word 0b01000001
-  .word 0b01000001
-  .word 0b01000001
-  .word 0b01000001
-  .word 0b01111111
-
 i2c_dev:
   .word 0x3c # address
 
@@ -398,8 +352,49 @@ start: # () => {
 
   mv    a0, s0 # address
   li    a1, 2 # page
-  li    a2, 0 # column
-  la    a3, D_sprite_arrow_right # &sprite
+  li    a2, 7*0 # column
+  la    a3, D_spritesheet # &sprite
+  addi  a3, a3, 4*8*0
+  jal   screen_sprite_page # (address, page, column, &sprite) => result
+  # TODO: errors
+
+  mv    a0, s0 # address
+  li    a1, 2 # page
+  li    a2, 7*1 # column
+  la    a3, D_spritesheet # &sprite
+  addi  a3, a3, 4*8*1
+  jal   screen_sprite_page # (address, page, column, &sprite) => result
+  # TODO: errors
+
+  mv    a0, s0 # address
+  li    a1, 2 # page
+  li    a2, 7*2 # column
+  la    a3, D_spritesheet # &sprite
+  addi  a3, a3, 4*8*2
+  jal   screen_sprite_page # (address, page, column, &sprite) => result
+  # TODO: errors
+
+  mv    a0, s0 # address
+  li    a1, 2 # page
+  li    a2, 7*3 # column
+  la    a3, D_spritesheet # &sprite
+  addi  a3, a3, 4*8*3
+  jal   screen_sprite_page # (address, page, column, &sprite) => result
+  # TODO: errors
+
+  mv    a0, s0 # address
+  li    a1, 2 # page
+  li    a2, 7*4 # column
+  la    a3, D_spritesheet # &sprite
+  addi  a3, a3, 4*8*4
+  jal   screen_sprite_page # (address, page, column, &sprite) => result
+  # TODO: errors
+
+  mv    a0, s0 # address
+  li    a1, 2 # page
+  li    a2, 7*5 # column
+  la    a3, D_spritesheet # &sprite
+  addi  a3, a3, 4*8*5
   jal   screen_sprite_page # (address, page, column, &sprite) => result
   # TODO: errors
 
@@ -411,33 +406,6 @@ L_loop_start:
   li    a0, GPIOD_ADDR                 # Toggle LED
   li    a1, LED_IRQ
   jal   toggle_pins
-
-  beq   s1, zero, L_loop_show_arrow
-  mv    s1, zero
-
-L_loop_hide_arrow:
-  mv    a0, s0 # address
-  li    a1, 2 # page
-  li    a2, 0 # column
-  la    a3, D_sprite_arrow_right
-  lw    a3, 0(a3) # length
-  mv    a4, zero
-  jal   screen_fill_page # (address, page, column, length, pattern) => result
-  bne   a0, zero, L_loop_start
-
-  j     L_loop_arrow_end
-
-L_loop_show_arrow:
-  mv    a0, s0 # address
-  li    a1, 2 # page
-  li    a2, 0 # column
-  la    a3, D_sprite_arrow_right
-  jal   screen_sprite_page # (address, page, column, &sprite) => result
-  # TODO: errors
-
-  li    s1, 0x01
-
-L_loop_arrow_end:
 
   li    a0, 1
   jal   clk_wait_ticks

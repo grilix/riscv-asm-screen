@@ -10,7 +10,7 @@ build_dir: build/
 AS := $(PREFIX)-as
 LD := $(PREFIX)-ld
 
-OBJECTS := build/main.o build/gpio.o build/startup.o build/i2c.o build/screen.o
+OBJECTS := build/main.o build/gpio.o build/startup.o build/i2c.o build/screen.o build/sprites.o
 ASFLAGS := -g -march=rv32ec_zicsr -mabi=ilp32e
 LDFLAGS := -E --discard-none \
 	   -T link.ld -nostdlib -m elf32lriscv --print-memory-usage --gc-sections
@@ -49,6 +49,9 @@ sigrok:
 		--protocol-decoders i2c
 server:
 	minichlink -baG
+
+sprites:
+	go run cmd/sprites/main.go > src/sprites.s
 
 gdb: build/$(PROJECT).elf
 	gdb-multiarch -tui -q \
