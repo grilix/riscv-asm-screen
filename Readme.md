@@ -3,6 +3,9 @@
 This is an attempt to handle a SSD1306 screen driver using a CH32V003, a RISC-V based
 microcontroller.
 
+
+![Numbers on the display](photo.jpg)
+
 ## Requirements
 
 ```
