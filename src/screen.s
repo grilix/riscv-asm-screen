@@ -6,7 +6,7 @@
 
 .global new_screen_send_page # (address, *bytes) => result
 .global screen_fill_page # (address, page, column, length, pattern) => result
-.global screen_sprite_page # (address, page, column, &sprite) => result
+.global screen_sprite_page # (address, page, column, *sprite) => result
 
 screen_set_cursor: # (address, page, column) => result {
   addi  sp, sp, -4*9
@@ -47,7 +47,7 @@ screen_set_cursor: # (address, page, column) => result {
   addi  a0, a0, 4*3 # stack offset
   li    a1, 4
   li    a2, 8000
-  jal   i2c_send_data # (&data, len, timeout) => result
+  jal   i2c_send_data # (*data, len, timeout) => result
 
 .L_screen_set_address_end:
 
@@ -57,7 +57,7 @@ screen_set_cursor: # (address, page, column) => result {
   j     i2c_stop
   # }
 
-screen_sprite_page: # (address, page, column, &sprite) => result {
+screen_sprite_page: # (address, page, column, *sprite) => result {
   addi  sp, sp, -4*6
   sw    ra, 4*0(sp)
   sw    s0, 4*1(sp)
@@ -65,7 +65,7 @@ screen_sprite_page: # (address, page, column, &sprite) => result {
   sw    a0, 4*2(sp) # address
   sw    a1, 4*3(sp) # page
   sw    a2, 4*4(sp) # column
-  sw    a3, 4*5(sp) # &sprite
+  sw    a3, 4*5(sp) # *sprite
 
   jal   screen_set_cursor # (address, page, column) => result
   bne   a0, zero, .L_screen_sprite_page_end
@@ -80,7 +80,7 @@ screen_sprite_page: # (address, page, column, &sprite) => result {
   jal   i2c_write_byte # (byte, timeout) => result
   bne   a0, zero, .L_screen_sprite_page_end
 
-  lw    a0, 4*5(sp) # &sprite
+  lw    a0, 4*5(sp) # *sprite
   lw    a1, 4*0(a0) # first word is the length
   addi  a0, a0, 4*1 # skip length
   li    a2, 8000 # timeout

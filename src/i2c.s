@@ -87,9 +87,9 @@ i2c_wait_status: # (status, timeout) => result {
 
   li    t0, I2C1_ADDR
 .L_i2c_wait_status_loop:
-  lw    a0, I2C_STAR2(t0)
+  lh    a0, I2C_STAR2(t0)
   sll   a0, a0, 16
-  lw    t2, I2C_STAR1(t0)
+  lh    t2, I2C_STAR1(t0)
   or    a0, a0, t2
 
   and   a0, a0, t1
@@ -125,15 +125,16 @@ i2c_send_addr: # (addr, timeout) => result {
   li    t0, I2C1_ADDR
 
   sll   a0, a0, 1
-  andi  a0, a0, 0xfe # clear last bit (write flag)
-  sw    a0, I2C_DATAR(t0)              # Send address
+  andi  a0, a0, 0xfe                   # clear last bit (write flag)
+  sb    a0, I2C_DATAR(t0)              # Send address
 
-  li    a0, I2C_STAR2_MSL
-  ori   a0, a0, I2C_STAR2_BUSY
-  ori   a0, a0, I2C_STAR2_TRA
+  li    a0, I2C_STAR2_MSL | I2C_STAR2_BUSY | I2C_STAR2_TRA
+  # ori   a0, a0, I2C_STAR2_BUSY
+  # ori   a0, a0, I2C_STAR2_TRA
   sll   a0, a0, 16
-  ori   a0, a0, I2C_STAR1_TXE
-  ori   a0, a0, I2C_STAR1_ADDR # TODO: does this work? SPOILER: it does
+  ori   a0, a0, I2C_STAR1_TXE | I2C_STAR1_ADDR
+  # ori   a0, a0, I2C_STAR1_TXE
+  # ori   a0, a0, I2C_STAR1_ADDR # TODO: does this work? SPOILER: it does
 
   j     i2c_wait_status
 # }
@@ -165,17 +166,17 @@ i2c_start: # (addr, timeout) => result {
 
 i2c_write_byte: # (byte, timeout) => result {
   li    a2, I2C1_ADDR
-  sw    a0, I2C_DATAR(a2)
+  sb    a0, I2C_DATAR(a2)
 
   li    a0, I2C_STAR1_TXE
   j     i2c_wait_status
 # }
 
-i2c_send_data: # (&data, len, timeout) => result {
+i2c_send_data: # (*data, len, timeout) => result {
   addi  sp, sp, -(4*6)
   sw    ra, 4*0(sp)
 
-  sw    a0, 4*1(sp) # &data
+  sw    a0, 4*1(sp) # *data
   sw    a1, 4*2(sp) # len
   sw    a2, 4*3(sp) # timeout
 
@@ -185,10 +186,10 @@ i2c_send_data: # (&data, len, timeout) => result {
   addi  a0, a0, -1
   sw    a0, 4*2(sp) # len
 
-  lw    a0, 4*1(sp) # read &data address
+  lw    a0, 4*1(sp) # read *data address
   lw    a1, 0(a0) # read first byte
   addi  a0, a0, 4
-  sw    a0, 4*1(sp) # advance &data pointer
+  sw    a0, 4*1(sp) # advance *data pointer
 
   li    a0, I2C1_ADDR
   sw    a1, I2C_DATAR(a0)

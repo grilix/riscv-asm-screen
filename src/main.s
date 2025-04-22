@@ -353,49 +353,49 @@ start: # () => {
   mv    a0, s0 # address
   li    a1, 2 # page
   li    a2, 7*0 # column
-  la    a3, D_spritesheet # &sprite
+  la    a3, D_spritesheet # *sprite
   addi  a3, a3, 4*8*0
-  jal   screen_sprite_page # (address, page, column, &sprite) => result
+  jal   screen_sprite_page # (address, page, column, *sprite) => result
   # TODO: errors
 
   mv    a0, s0 # address
   li    a1, 2 # page
   li    a2, 7*1 # column
-  la    a3, D_spritesheet # &sprite
+  la    a3, D_spritesheet # *sprite
   addi  a3, a3, 4*8*1
-  jal   screen_sprite_page # (address, page, column, &sprite) => result
+  jal   screen_sprite_page # (address, page, column, *sprite) => result
   # TODO: errors
 
   mv    a0, s0 # address
   li    a1, 2 # page
   li    a2, 7*2 # column
-  la    a3, D_spritesheet # &sprite
+  la    a3, D_spritesheet # *sprite
   addi  a3, a3, 4*8*2
-  jal   screen_sprite_page # (address, page, column, &sprite) => result
+  jal   screen_sprite_page # (address, page, column, *sprite) => result
   # TODO: errors
 
   mv    a0, s0 # address
   li    a1, 2 # page
   li    a2, 7*3 # column
-  la    a3, D_spritesheet # &sprite
+  la    a3, D_spritesheet # *sprite
   addi  a3, a3, 4*8*3
-  jal   screen_sprite_page # (address, page, column, &sprite) => result
+  jal   screen_sprite_page # (address, page, column, *sprite) => result
   # TODO: errors
 
   mv    a0, s0 # address
   li    a1, 2 # page
   li    a2, 7*4 # column
-  la    a3, D_spritesheet # &sprite
+  la    a3, D_spritesheet # *sprite
   addi  a3, a3, 4*8*4
-  jal   screen_sprite_page # (address, page, column, &sprite) => result
+  jal   screen_sprite_page # (address, page, column, *sprite) => result
   # TODO: errors
 
   mv    a0, s0 # address
   li    a1, 2 # page
   li    a2, 7*5 # column
-  la    a3, D_spritesheet # &sprite
+  la    a3, D_spritesheet # *sprite
   addi  a3, a3, 4*8*5
-  jal   screen_sprite_page # (address, page, column, &sprite) => result
+  jal   screen_sprite_page # (address, page, column, *sprite) => result
   # TODO: errors
 
 L_loop_start:
