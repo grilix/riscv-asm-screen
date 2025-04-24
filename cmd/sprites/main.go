@@ -34,8 +34,8 @@ func main() {
 	fmt.Println(".section .rodata")
 
 	fmt.Println("D_spritesheet:")
-	for sprite := 0; sprite <= 9; sprite++ {
-		fmt.Printf("  .word %d\n", spriteSize)
+	fmt.Printf( "  .word %d\n", spriteSize)
+	for sprite := 0; sprite <= 9; sprite++ { // TODO: amount of sprites?
 		for segment := 0; segment < spriteSize; segment++ {
 			result := 0
 			for i := 0; i <= 7; i++ {
@@ -47,7 +47,8 @@ func main() {
 					result |= (1 << i)
 				}
 			}
-			fmt.Printf("  .word 0b%08b\n", result)
+			fmt.Printf("  .byte 0b%08b\n", result)
 		}
+		fmt.Printf("  .byte 0b%08b # FIXME: padding\n", 0)
 	}
 }

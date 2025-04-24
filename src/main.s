@@ -349,54 +349,53 @@ start: # () => {
   li    a1, LED_CNT
   jal   turn_pins_on
 
-  # li    s1, 0x00
-
   mv    a0, s0 # address
   li    a1, 2 # page
-  li    a2, 7*0 # column
-  la    a3, D_spritesheet # *sprite
-  addi  a3, a3, 4*8*0
-  jal   screen_sprite_page # (address, page, column, *sprite) => result
+  li    a2, 0 # column
+  jal   screen_set_cursor # (address, page, column) => result
+  # TODO: errors
+
+
+  mv    a0, s0 # address
+  li    a1, 7
+  la    a2, D_spritesheet # *sprite
+  addi  a2, a2, (8*0)+4
+  jal   screen_send_sprite # (address, len, *data) => result
   # TODO: errors
 
   mv    a0, s0 # address
-  li    a1, 2 # page
-  li    a2, 7*1 # column
-  la    a3, D_spritesheet # *sprite
-  addi  a3, a3, 4*8*1
-  jal   screen_sprite_page # (address, page, column, *sprite) => result
+  li    a1, 7
+  la    a2, D_spritesheet # *sprite
+  addi  a2, a2, (8*1)+4 #4*8*1
+  jal   screen_send_sprite # (address, len, *data) => result
   # TODO: errors
 
   mv    a0, s0 # address
-  li    a1, 2 # page
-  li    a2, 7*2 # column
-  la    a3, D_spritesheet # *sprite
-  addi  a3, a3, 4*8*2
-  jal   screen_sprite_page # (address, page, column, *sprite) => result
+  li    a1, 7
+  la    a2, D_spritesheet # *sprite
+  addi  a2, a2, (8*2)+4
+  jal   screen_send_sprite # (address, len, *data) => result
   # TODO: errors
 
   mv    a0, s0 # address
-  li    a1, 2 # page
-  li    a2, 7*3 # column
-  la    a3, D_spritesheet # *sprite
-  addi  a3, a3, 4*8*3
-  jal   screen_sprite_page # (address, page, column, *sprite) => result
+  li    a1, 7
+  la    a2, D_spritesheet # *sprite
+  addi  a2, a2, (8*3)+4
+  jal   screen_send_sprite # (address, len, *data) => result
   # TODO: errors
 
   mv    a0, s0 # address
-  li    a1, 2 # page
-  li    a2, 7*4 # column
-  la    a3, D_spritesheet # *sprite
-  addi  a3, a3, 4*8*4
-  jal   screen_sprite_page # (address, page, column, *sprite) => result
+  li    a1, 7
+  la    a2, D_spritesheet # *sprite
+  addi  a2, a2, (8*4)+4
+  jal   screen_send_sprite # (address, len, *data) => result
   # TODO: errors
 
   mv    a0, s0 # address
-  li    a1, 2 # page
-  li    a2, 7*5 # column
-  la    a3, D_spritesheet # *sprite
-  addi  a3, a3, 4*8*5
-  jal   screen_sprite_page # (address, page, column, *sprite) => result
+  li    a1, 7
+  la    a2, D_spritesheet # *sprite
+  addi  a2, a2, (8*5)+4
+  jal   screen_send_sprite # (address, len, *data) => result
   # TODO: errors
 
 L_loop_start:

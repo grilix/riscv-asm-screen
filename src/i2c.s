@@ -129,12 +129,8 @@ i2c_send_addr: # (addr, timeout) => result {
   sb    a0, I2C_DATAR(t0)              # Send address
 
   li    a0, I2C_STAR2_MSL | I2C_STAR2_BUSY | I2C_STAR2_TRA
-  # ori   a0, a0, I2C_STAR2_BUSY
-  # ori   a0, a0, I2C_STAR2_TRA
   sll   a0, a0, 16
   ori   a0, a0, I2C_STAR1_TXE | I2C_STAR1_ADDR
-  # ori   a0, a0, I2C_STAR1_TXE
-  # ori   a0, a0, I2C_STAR1_ADDR # TODO: does this work? SPOILER: it does
 
   j     i2c_wait_status
 # }
@@ -142,7 +138,7 @@ i2c_send_addr: # (addr, timeout) => result {
 i2c_start: # (addr, timeout) => result {
   addi  sp, sp, -(4*6)
   sw    ra, 4*0(sp)
-  sw    a0, 4*1(sp) # addr
+  sb    a0, 4*1(sp) # addr
   sw    a1, 4*2(sp) # timeout
 
   lw    a0, 4*2(sp) # timeout
@@ -154,7 +150,7 @@ i2c_start: # (addr, timeout) => result {
   bne   a0, zero, .L_i2c_start_end
 
   lw    a1, 4*2(sp) # timeout
-  lw    a0, 4*1(sp) # addr
+  lb    a0, 4*1(sp) # addr
   lw    ra, 4*0(sp)
   addi  sp, sp, (4*6)
 
@@ -172,7 +168,17 @@ i2c_write_byte: # (byte, timeout) => result {
   j     i2c_wait_status
 # }
 
+# *data is a list of bytes:
+#  # data+0x04 [b5, b6, ...,  ],
+#  # data+0x00 [b1, b2, b3, b4],
 i2c_send_data: # (*data, len, timeout) => result {
+  beqz   a1, .L_i2c_send_exit          # exit if len=0
+                                       # This avoids some problems and saves cycles,
+                                       # although this check should be made by the
+                                       # caller, imho.
+                                       # Now we can safely assume *data is pointing
+                                       # to something.
+
   addi  sp, sp, -(4*6)
   sw    ra, 4*0(sp)
 
@@ -180,35 +186,48 @@ i2c_send_data: # (*data, len, timeout) => result {
   sw    a1, 4*2(sp) # len
   sw    a2, 4*3(sp) # timeout
 
+  sw    s0, 4*4(sp)
+  sw    s1, 4*5(sp)
+
+.L_i2c_send_next_word:
+  lw    a0, 4*1(sp)                    # get pointer from the stack
+  lw    s0, 0(a0)                      # load next word from *data
+  addi  a0, a0, 4                      # Advance *data pointer
+  sw    a0, 4*1(sp)
+
+  li    s1, 4                          # start byte counter
+
 .L_i2c_send_next_byte:
-  lw    a0, 4*2(sp) # len
-  beq   a0, zero, .L_i2c_send_end
-  addi  a0, a0, -1
-  sw    a0, 4*2(sp) # len
+                                       # extract first byte from the word
+  andi  a0, s0, 0xff
+                                       # shift 8 bits right for next round
+  srli  s0, s0, 8
 
-  lw    a0, 4*1(sp) # read *data address
-  lw    a1, 0(a0) # read first byte
-  addi  a0, a0, 4
-  sw    a0, 4*1(sp) # advance *data pointer
-
-  li    a0, I2C1_ADDR
-  sw    a1, I2C_DATAR(a0)
+  li    a1, I2C1_ADDR
+  sb    a0, I2C_DATAR(a1)              # store byte on the data register
 
   li    a0, I2C_STAR1_TXE
   lw    a1, 4*3(sp) # timeout
-  jal   i2c_wait_status
-  beq   a0, zero, .L_i2c_send_next_byte
+  jal   i2c_wait_status                # wait for the byte to be sent
+  bnez  a0, .L_i2c_send_end            # exit if sending failed
 
-  li    a1, 1
+  lw    a0, 4*2(sp) # len
+  addi  a0, a0, -1                     # decrement bytes left
+  beqz  a0, .L_i2c_send_end            # exit if there are no more bytes
+  sw    a0, 4*2(sp) # len
+
+  addi  s1, s1, -1
+  beqz  s1, .L_i2c_send_next_word      # next word if byte counter is over
+
+  j .L_i2c_send_next_byte              # next byte otherwise
 
 .L_i2c_send_end:
-  #li    t0, I2C1_ADDR
-  #lw    t1, I2C_CTLR1(t0)
-  #ori   t1, t1, I2C_CTLR1_STOP
-  #sw    t1, I2C_CTLR1(t0)
-
+  lw    s1, 4*5(sp)
+  lw    s0, 4*4(sp)
   lw    ra, 4*0(sp)
   addi  sp, sp, (4*6)
+
+.L_i2c_send_exit:
 
   ret
 # }

@@ -1,12 +1,13 @@
 # vim: ft=riscv commentstring=#%s
+
 .section .text
 
 .equ    SCREEN_COMMAND, 0x00
 .equ    SCREEN_DATA,    0x40
 
-.global new_screen_send_page # (address, *bytes) => result
 .global screen_fill_page # (address, page, column, length, pattern) => result
-.global screen_sprite_page # (address, page, column, *sprite) => result
+.global screen_set_cursor # (address, page, column) => result
+.global screen_send_sprite # (address, len, *data) => result
 
 screen_set_cursor: # (address, page, column) => result {
   addi  sp, sp, -4*9
@@ -23,25 +24,36 @@ screen_set_cursor: # (address, page, column) => result {
                                       #      # 0x22, # TODO: needed?
                                       #      0xb0 + page
                                       #      # 0x04, # TODO: needed?
-                                      #      lower,
-                                      #      higher,
+                                      #      lower,  # (column & 0x0f)
+                                      #      higher, # (((column >> 4) & 0x0f) | 0x10)
                                       #    ]
-  li    a1, SCREEN_COMMAND
-  sw    a1, 4*3(sp)
-  li    a1, 0xb0
-  lw    a0, 4*1(sp) # page
-  add   a1, a1, a0
-  sw    a1, 4*4(sp)
-  lw    a0, 4*2(sp) # column
-  andi  a1, a0, 0x0f
-  sw    a1, 4*5(sp) # column & 0x0f
 
-  li    a1, 0x10 # TODO: higher (column)
+  li    a1, SCREEN_COMMAND
+
+  li    a0, 0xb0                      # 0xb0 + page
+  lw    a2, 4*1(sp) # page
+  add   a0, a0, a2
+
+  slli  a0, a0, 8*1
+  or    a1, a1, a0
+
+
+  lw    a0, 4*2(sp) # column
+  andi  a0, a0, 0x0f                  # column & 0x0f
+
+  slli  a0, a0, 8*2
+  or    a1, a1, a0
+
+
   lw    a0, 4*2(sp) # column
   srli  a0, a0, 4
-  andi  a1, a0, 0x0f
-  ori   a1, a1, 0x10
-  sw    a1, 4*6(sp) # ((column >> 4) & 0x0f) | 0x10
+  andi  a0, a0, 0x0f
+  ori   a0, a0, 0x10                  # ((column >> 4) & 0x0f) | 0x10
+
+  slli  a0, a0, 8*3
+  or    a1, a1, a0
+
+  sw    a1, 4*3(sp)
 
   mv    a0, sp
   addi  a0, a0, 4*3 # stack offset
@@ -55,22 +67,17 @@ screen_set_cursor: # (address, page, column) => result {
   addi  sp, sp,  4*9
 
   j     i2c_stop
-  # }
+# }
 
-screen_sprite_page: # (address, page, column, *sprite) => result {
+screen_send_sprite: # (address, len, *data) => result {
   addi  sp, sp, -4*6
   sw    ra, 4*0(sp)
   sw    s0, 4*1(sp)
 
   sw    a0, 4*2(sp) # address
-  sw    a1, 4*3(sp) # page
-  sw    a2, 4*4(sp) # column
-  sw    a3, 4*5(sp) # *sprite
+  sw    a1, 4*3(sp) # len
+  sw    a2, 4*4(sp) # *data
 
-  jal   screen_set_cursor # (address, page, column) => result
-  bne   a0, zero, .L_screen_sprite_page_end
-
-  lw    a0, 4*2(sp) # address
   li    a1, 8000 # timeout
   jal   i2c_start
   bne   a0, zero, .L_screen_sprite_page_end
@@ -80,9 +87,8 @@ screen_sprite_page: # (address, page, column, *sprite) => result {
   jal   i2c_write_byte # (byte, timeout) => result
   bne   a0, zero, .L_screen_sprite_page_end
 
-  lw    a0, 4*5(sp) # *sprite
-  lw    a1, 4*0(a0) # first word is the length
-  addi  a0, a0, 4*1 # skip length
+  lw    a0, 4*4(sp) # *data
+  lw    a1, 4*3(sp) # len
   li    a2, 8000 # timeout
   jal   i2c_send_data # (*bytes, len, timeout) => result
 
@@ -93,7 +99,7 @@ screen_sprite_page: # (address, page, column, *sprite) => result {
   addi  sp, sp, 4*6
 
   j     i2c_stop
-  # }
+# }
 
 screen_fill_page: # (address, page, column, length, pattern) => result {
   addi  sp, sp, -4*6
@@ -133,4 +139,4 @@ screen_fill_page: # (address, page, column, length, pattern) => result {
   addi  sp, sp, 4*6
 
   j     i2c_stop
-  # }
+# }
