@@ -30,57 +30,58 @@ i2c_dev:
   .word 0x3c # address
 
 screen_init:
-  .word 14 # length # TODO: change these to bytes instead of words
-  .word 0x00 # Command start TODO: this shouldn't be here?
-  .word 0xae  # DISPLAY OFF
+  .word 26 # length # TODO: change these to bytes instead of words
 
-  # .word 0xa8  # SET MULTIPLEX
-  # .word   0x1f
+  .byte 0x00 # Command start TODO: this shouldn't be here?
+  .byte 0xae | 0b0  # DISPLAY OFF
 
-  # .word 0x20  # MEMORY MODE
-  # .word 0x00  # HORIZONTAL (0x00=horizontal,0x01=vertical,0x02=reset)
+  # .byte 0xa8  # SET MULTIPLEX
+  # .byte   0x1f
 
-  # .word 0x40 # START LINE
+  .byte 0x20  # MEMORY MODE
+  .byte 0b00  # HORIZONTAL (0b00=horizontal,0b01=vertical,0b10=reset)
 
-  # .word 0xd3  # SET DISPLAY OFFSET
-  # .word   0x00
+  # .byte 0x40 # START LINE
 
-  # .word 0xa0  # SET SEGMENT REMAP (0xa0|0xa1)
+  .byte 0xd3  # SET DISPLAY OFFSET
+  .byte   0b000000
 
-  # .word 0xc0  # SET COM SCAN DIRECTION (0xc0|0xc8)
+  .byte 0xa0 | 0b0  # SET SEGMENT REMAP
 
-  .word 0xda  # SET COM PINS (0x12=128x64,0x02=128x32)
-  .word   0x02
+  .byte 0xc0 | (0b0 << 3) # SET COM SCAN DIRECTION (0xc0|0xc8)
 
-  .word 0x81 # CONTRAST
-  .word   0x20
+  .byte 0xda  # SET COM PINS (0x12=128x64,0x02=128x32)
+  .byte   0x02 | (0b00 << 5)
 
-  .word 0xa4  # DISPLAY ALL ON RESUME
+  .byte 0x81 # CONTRAST
+  .byte   5
 
-  .word 0xa6  # NORMAL DISPLAY
+  .byte 0xa4  # DISPLAY ALL ON RESUME
 
-  .word 0xd5  # SET DISPLAY CLOCK DIV
-  .word   0x80
+  .byte 0xa6  # NORMAL DISPLAY
 
-  # .word 0xd9  # SET PRECHARGE
-  # .word   0xc2
+  .byte 0xd5  # SET DISPLAY CLOCK DIV
+  .byte   0b0000 | (0b1000 << 4) # TODO ??? 0x80?
 
-  # .word 0xdb  # SET VCOM DESELECT
-  # .word   0x20
+  .byte 0xd9  # SET PRECHARGE
+  .byte   0x2 | (0x2 << 4) # TODO: ?? 0xc2
 
-  .word 0x8d  # CHARGE PUMP
-  .word   0x14
+  .byte 0xdb  # SET VCOM DESELECT
+  .byte   0x20
 
-  .word 0x2e # DEACTIVATE SCROLL
+  .byte 0x8d  # CHARGE PUMP
+  .byte   0x14
 
-  #.word 0x10  # SET HIGH COLUMN
-  #.word   0x80
-  #.word   0xcb
-  #.word 0x00  # SET LOW COLUMN
-  #.word   0x10
-  #.word   0x40
+  .byte 0x2e # DEACTIVATE SCROLL
 
-  .word 0xaf # DISPLAY ON
+  .byte 0x10  | 0x0 # SET HIGH COLUMN
+  # .byte   0x80
+  # .byte   0xcb
+  .byte 0x00  | 0x0 # SET LOW COLUMN
+  # .byte   0x10
+  # .byte   0x40
+
+  .byte 0xae | 0b1 # DISPLAY ON
 
 .section .text
 
@@ -265,7 +266,7 @@ send_i2c_data: # (addr, *data) => {
   lw    a1, 0(a0) # len
   addi  a0, a0, 4 # advance pointer
   li    a2, 8000 # timeout
-  jal     i2c_send_data
+  jal   i2c_send_data
 
 .L_send_i2c_data_end:
   jal   i2c_stop
@@ -348,7 +349,7 @@ start: # () => {
   li    a1, LED_CNT
   jal   turn_pins_on
 
-  li    s1, 0x00
+  # li    s1, 0x00
 
   mv    a0, s0 # address
   li    a1, 2 # page
